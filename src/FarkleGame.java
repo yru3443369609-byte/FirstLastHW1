@@ -8,12 +8,13 @@ public class FarkleGame {
 
         for (int i = 0; i < dice.length; i++) {
             if (used[i] == 0) {
-                System.out.println(label[i] + ": " + dice[i] + " (Meld)");
+                System.out.println(label[i] + ": " + dice[i] + " [Meld]");
             } else {
-                System.out.println(label[i] + ": " + dice[i] + " (Unused)");
+                System.out.println(label[i] + ": " + dice[i] + " [Available]");
             }
         }
     }
+
     public static boolean isFarkle(int[] dice) {
 
         int[] count = new int[7];
@@ -125,19 +126,29 @@ public class FarkleGame {
         return meldScore;
     }
 
+
     public static void main(String[] args) {
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Please enter your name:");
+        String userName = scanner.nextLine().trim();
+        if (userName.isEmpty()) {
+            userName = "Unknown Player";
+        }
+        System.out.println("================================");
+        System.out.println("|   Farkle Game by " +"[" +userName+"]"+ "       |");
+        System.out.println("================================");
+
         char[] label = {'A', 'B', 'C', 'D', 'E', 'F'};
         Random randomNum = new Random();
         int[] dice = new int[6];
 
         for (int i = 0; i < dice.length; i++) {
             dice[i] = randomNum.nextInt(6) + 1;
-            System.out.println(label[i] + ": " + dice[i]);
         }
 
 
 //            Let user choose dices
-        Scanner scanner = new Scanner(System.in);
         int[] used = {-1, -1, -1, -1, -1, -1};
         int[] meld = {0, 0, 0, 0, 0, 0};
         int meldCount = 0;
@@ -151,75 +162,139 @@ public class FarkleGame {
 
             displayDice(dice, used, label);
 
-            System.out.println("Choose dices to meld (A-F), K to bank or Q to quit: ");
-            String choice = scanner.nextLine();
+            System.out.println("Choose dices to meld (A-F), \"K\" to bank,\"R\" to reroll the Dice\n or \"Q\" to quit: ");
+            String choice = scanner.nextLine().trim();
             System.out.println("Your choice is : " + choice);
 
             if (choice.trim().equalsIgnoreCase("K")) {
-                System.out.println();
-                System.out.println("Final Meld:");
-                for (int i = 0; i < meld.length; i++) {
-                    if (meld[i] != 0) {
-                        System.out.println(label[i] + ": " + meld[i]);
-                    }
-                }
-
-                System.out.println("Final Unused Dice:");
-                for (int i = 0; i < dice.length; i++) {
-                    if (used[i] != 0) {
-                        System.out.println(label[i] + ": " + dice[i]);
-                    }
-                }
-
-                System.out.println("Meld Score: " + turnScore);
-
                 totalScore += turnScore;
+
+                System.out.println("Score banked: " + turnScore);
+                System.out.println("Final total score: " + totalScore);
+
                 gameOver = true;
                 continue;
             }
-            if (choice.trim().equals("Q")) {
+            if (choice.equalsIgnoreCase("R")) {
+                for (int i = 0; i < dice.length; i++) {
+                    if (used[i] != 0) {
+                        dice[i] = randomNum.nextInt(6) + 1;
+                        unusedCount++;
+                    }
+                }
+                if (unusedCount == 0) {
+                    System.out.println("No available dice to reroll");
+                    continue;
+                }
+                int[] currentUnusedDice = new int[unusedCount];
+                int position = 0;
+
+                for (int i = 0; i < dice.length; i++) {
+                    if (used[i] != 0) {
+                        currentUnusedDice[position] = dice[i];
+                        position++;
+                    }
+                }
+
+                if (isFarkle(currentUnusedDice)) {
+                    System.out.println("Farkle! Your turn score is 0.");
+                    turnScore = 0;
+                    System.out.println("Player: " + userName);
+                    System.out.println("Final total score: " + totalScore);
+                    gameOver = true;
+                }
+                continue;
+            }
+            if (choice.trim().equalsIgnoreCase("Q")) {
+                System.out.println();
+                System.out.println("Player: " + userName);
+                System.out.println("Banked score: " + totalScore);
+                System.out.println("Current turn score: " + turnScore);
+                System.out.println("Final total score: " + totalScore);
                 gameOver = true;
                 continue;
             }
             String[] choices = choice.trim().split(",");
+            int[] selectedDice = new int[6];
+            int selectedCount = 0;
+            boolean validInput = true;
+
             for (int i = 0; i < choices.length; i++) {
-                int index = choices[i].trim().charAt(0) - 'A';
+                String input = choices[i].trim().toUpperCase();
+                if (input.length() != 1 || input.charAt(0) < 'A' || input.charAt(0) > 'F') {
+                    validInput = false;
+                    break;
+                }
+                int index = input.charAt(0) - 'A';
+
                 if (used[index] == 0) {
-                    System.out.println("This position is used");
-                } else {
-                    used[index] = 0;
-                    meld[meldCount] = dice[index];
-                    meldCount++;
-                    System.out.println("Dice number is :" + dice[index]);
-                    turnScore = calculateMeldScore(meld);
+                    validInput = false;
+                    break;
                 }
-                System.out.println("The recent Score is : " + turnScore);
+                for (int j = 0; j < i; j++) {
+                    if (choices[j].trim().equalsIgnoreCase(input)) {
+                        validInput = false;
+                        break;
+                    }
+                }
+                if (!validInput) {
+                    break;
+                }
+                selectedDice[selectedCount] = dice[index];
+                selectedCount++;
+            }
+            if (!validInput) {
+                System.out.println("Invalid input, please try again");
+                continue;
+            }
+            int newMeldScore = calculateMeldScore(selectedDice);
+
+            if (newMeldScore == 0) {
+                System.out.println("This is not a valid meld. Try again.");
+                continue;
             }
 
-            for (int i = 0; i < dice.length; i++) {
-                if (used[i] != 0) {
-                    dice[i] = randomNum.nextInt(6) + 1;
-                    System.out.println(label[i] + ": " + dice[i]);
-                    unusedDice[unusedCount] = dice[i];
-                    unusedCount++;
-                }
+            for (int i = 0; i < choices.length; i++) {
+                int index = choices[i].trim().toUpperCase().charAt(0) - 'A';
+
+                used[index] = 0;
+                meld[meldCount] = dice[index];
+                meldCount++;
             }
-                int[] currentUnusedDice = new int[unusedCount];
 
-                for (int i = 0; i < unusedCount; i++) {
-                    currentUnusedDice[i] = unusedDice[i];
-                }
+            turnScore += newMeldScore;
 
-                if (isFarkle(currentUnusedDice)) {
-                    System.out.println("The dice is Farkle");
-                    turnScore = 0;
-                    gameOver = true;
-                }
-                if (meldCount == 6) {
+            System.out.println("New meld score: " + newMeldScore);
+            System.out.println("Turn score: " + turnScore);
+
+            if (meldCount == 6) {
+                System.out.println("**************");
+                System.out.println("*  Hot Hand  *");
+                System.out.println("**************");
+                System.out.println();
+                System.out.println("Would you like to roll 6 new dice, or bank and end your turn?");
+                System.out.println("1. Roll all 6 dices again");
+                System.out.println("2. Bank your score");
+
+                String hotHandChoice = scanner.nextLine().trim();
+
+                if (hotHandChoice.equals("1")) {
+                    for (int i = 0; i < dice.length; i++) {
+                        dice[i] = randomNum.nextInt(6) + 1;
+                        used[i] = -1;
+                    }
+                    meldCount = 0;
+                    meld = new int[6];
+                    continue;
+                } else if (hotHandChoice.equals("2")) {
                     totalScore += turnScore;
+                    System.out.println("Final total score: " + totalScore);
                     gameOver = true;
+                    continue;
+                }else {
+                    System.out.println("Invalid Choice");
                 }
             }
-            System.out.println("The Finally Score is : " + totalScore);
         }
     }
+}
