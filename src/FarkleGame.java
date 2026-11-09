@@ -47,14 +47,15 @@ public class FarkleGame {
 
             String defaultName;
 
-            if (i < defaultNames.length) {
+            if (playerCount == 1) {
+                defaultName = "Unknown Player#1";
+            } else if (i < defaultNames.length) {
                 defaultName = defaultNames[i];
             } else {
                 defaultName = "Player# " + (i + 1);
             }
 
-            System.out.println("What is player " + (i + 1)
-                    + "'s name? [" + defaultName + "]");
+            System.out.println("What is player " + (i + 1) + "'s name? [" + defaultName + "]");
 
             String enteredName = scanner.nextLine().trim();
 
